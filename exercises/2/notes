@@ -1,0 +1,4 @@
+1) Integer overflow, exept for nagfor compiler the program continues
+2) g95 and gfortran have most available. Nagfor has different kind numbering, but this can be overriden using -kind=byte
+3) I think the problem is in the substraction 1 - something close to one can only give a number up to a certain e**-c, which divided by smthing much smaller grows really quickly, whereas for the g(x) function the order of numerator and denominator is roughly still the same.
+4) ?? I cant manage to catch division by zero for 0, 0 input

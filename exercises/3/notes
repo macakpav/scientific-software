@@ -1,0 +1,10 @@
+Q1: 1) in gfortran the noninitialized array can have random values. Nagfor and ifort probably initialize the array to 0 automaticaly
+    2) the elements are zero
+    3,4) without the flags I just get value from a random memory cell
+         nagfor throws exception even without flags
+
+Q2: 
+
+Q3: ?? How can I tell if the matrix is passed by reference or a copy fe. A(:5,:5) looks like its lda is 5.
+        So what is the difference between passing A, A(1,1) and A(:5,:5)? How do I know up front what will happen? WHat does A actually represent.
+        A and A(1,1) should work the same (with lda actually lda), but A(:5,:5) is not probably a good way to pass things to lapack/blas right?

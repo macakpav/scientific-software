@@ -1,0 +1,16 @@
+ad1) Done with select case.
+ad2) Only one .o file -> compiler says either missing MAIN or missing the module.
+     Compiler will say that it cannot find the .mod file (obj file of hello_world wont be created)
+ad3) If any of the dependencies were changed more recently then it needs to be built. It does not compile new .o files if the source or dependencies havent changed.
+     Only hello_world.f95 will be compiled again, the module will not.
+     Both module.f95 and world.f95 have to be recompiled.
+     I don't see difference in the compilers?
+ad4) On usefulness of more decimal places - it probably depends what you need the output for, if you only want to look at it, than it is fine like this, but if it is passed f.e. to another program, more prescise output could be useful.
+     The numbers in the special matrices probably lie in between two different floating point numbers so the original value is slightly modified from the one that is given.
+     ??(solved in matrix_module.f95) - How to effectively print the delimeters for Sum rows and columns without the very last? '(a,', size(sum_rows)-1, '(e19.9,"; "), e19.9)' or similar does not work
+     Different values of idicies inside subroutine - assumed-shape array gets mapped with default starting index (p.63)
+ad5) function gets called by its name like 'Func(arg1,arg2)' and has a return value. Procedures get called 'call Proc(arg1,arg2)' they don't return anything but instead change their inputs if specified intent(in/out/inout(default). I surely would not use func to modify variables.
+     
+     The two dimensional array a = reshape((/ (i, i=3,41,2) /), (/2,10/) )
+
+??(heretige of older fortran version, explicit allow more stuff (assumed size arrays f.e.)) - explicit/implicit interface what is it really? Does not strike me as a logical thing.
