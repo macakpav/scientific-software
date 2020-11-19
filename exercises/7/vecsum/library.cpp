@@ -24,8 +24,8 @@ namespace tws{
     void reverse_print_vector(std::vector<int> const & v)
     {
         std::cout<<"("<<v.size()<<") [";
-        for (decltype(v.size()) i = v.size()-1; i > 0;--i ) {
-            std::cout<<v[i]<<" ";
+        for (decltype(v.size()) i = v.size()-1; i >= 0;--i ) {
+            std::cout<<i<<" ";
         }
         std::cout<<"]"<<std::endl;
     }
