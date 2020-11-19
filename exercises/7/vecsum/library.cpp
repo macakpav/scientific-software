@@ -1,43 +1,69 @@
 #include <vector>
 #include <iostream>
-#include <tuple>   
+#include <tuple>
 #include <cassert>
 #include <numeric>
 #include <cmath>
-namespace tws{
-    void print_vector(std::vector<int> const & v)
+namespace tws
+{
+    void print_vector(std::vector<int> const &v)
     {
-        std::cout<<"("<<v.size()<<") [";
-        for (decltype(v.size()) i = 0; i < v.size(); ++i) {
-            std::cout<<v[i]<<" ";
+        assert(v.size() > 0);
+        std::cout << "(" << v.size() << ") [";
+        for (decltype(v.size()) i = 0; i < v.size(); ++i)
+        {
+            std::cout << v[i] << " ";
         }
-        std::cout<<"]"<<std::endl;
+        std::cout << "]" << std::endl;
     }
-    void print_vector(std::vector<double> const & v)
+    void print_vector(std::vector<double> const &v)
     {
-        std::cout<<"("<<v.size()<<") [";
-        for (decltype(v.size()) i = 0; i < v.size(); ++i) {
-            std::cout<<v[i]<<" ";
+        assert(v.size() > 0);
+        std::cout << "(" << v.size() << ") [";
+        for (decltype(v.size()) i = 0; i < v.size(); ++i)
+        {
+            std::cout << v[i] << " ";
         }
-        std::cout<<"]"<<std::endl;
+        std::cout << "]" << std::endl;
     }
-    void reverse_print_vector(std::vector<int> const & v)
+    void reverse_print_vector(std::vector<int> const &v)
     {
-        std::cout<<"("<<v.size()<<") [";
-        for (decltype(v.size()) i = v.size()-1; i >= 0;--i ) {
-            std::cout<<i<<" ";
+        assert(v.size() > 0);
+        std::cout << "(" << v.size() << ") [";
+        for (decltype(v.size()) i = v.size(); i > 0; --i)
+        {
+            std::cout << v[i - 1] << " ";
         }
-        std::cout<<"]"<<std::endl;
+        std::cout << "]" << std::endl;
     }
-    std::tuple<double, double> calculate_mean_stdev(std::vector<double> const & v,const int nbtodiscard=5){
-        assert(v.size()>0);
-        assert(nbtodiscard> 0);
-        assert((int) v.size()>nbtodiscard);
-        int N=v.size();
-        auto mean = std::accumulate(v.begin()+nbtodiscard, v.end(), 0.0);
-        mean = mean / (N-nbtodiscard);
-        auto st_dev = std::accumulate(v.begin()+nbtodiscard, v.end(), 0.0,[mean](auto res, auto x){return res+(x-mean)*(x-mean);});
-        st_dev = std::sqrt(st_dev / (N-nbtodiscard-1));
-        return {mean,st_dev};
+    std::tuple<double, double> calculate_mean_stdev(std::vector<double> const &v, const int nbtodiscard = 5)
+    {
+        assert(v.size() > 0);
+        assert(nbtodiscard > 0);
+        assert((int)v.size() > nbtodiscard);
+        int N = v.size();
+        auto mean = std::accumulate(v.begin() + nbtodiscard, v.end(), 0.0);
+        mean = mean / (N - nbtodiscard);
+        auto st_dev = std::accumulate(v.begin() + nbtodiscard, v.end(), 0.0, [mean](auto res, auto x) { return res + (x - mean) * (x - mean); });
+        st_dev = std::sqrt(st_dev / (N - nbtodiscard - 1));
+        return {mean, st_dev};
     }
-}
+    int sum_vector(std::vector<int> const &vec)
+    {   
+        int sum=0;
+        for (decltype(vec.size()) i = 0; i < vec.size(); i++)
+        {
+            sum+=vec[i];
+        }
+        return sum;
+    }
+    double sum_vector(std::vector<double> const &vec)
+    {   
+        double sum=0;
+        for (decltype(vec.size()) i = 0; i < vec.size(); i++)
+        {
+            sum+=vec[i];
+        }
+        return sum;
+    }
+} // namespace tws
