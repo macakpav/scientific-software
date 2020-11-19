@@ -33,6 +33,7 @@ int main(int argc, char const *argv[])
     {
         auto t_start = std::chrono::high_resolution_clock::now();
         sum = tws::sum_vector(v);
+        // sum = std::accumulate(v.begin(), v.end(), 0);
         auto t_end = std::chrono::high_resolution_clock::now();
         timings[i]=std::chrono::duration<double>(t_end-t_start).count();
         std::cerr<< " Resulting sum: " << sum << std::endl;

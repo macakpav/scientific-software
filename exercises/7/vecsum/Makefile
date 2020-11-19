@@ -30,6 +30,7 @@ default:
 
 run: $(NAME)
 	./$(NAME).exe 10 10 2
+
 library.o: ./library.hpp ./library.cpp
 	$(CC) -c $(CFLAGS) library.cpp
 
