@@ -1,0 +1,155 @@
+------------------------------------------------------------------------------------------------
+
+Section 1
+
+------------------------------------------------------------------------------------------------
+
+import numpy
+matrix_size = 10
+matrix = numpy.random.randn(matrix_size, matrix_size) #Default = row-major order
+first_row = matrix[0,:]
+print(first_row)
+print(numpy.size(matrix,0)) # Rows
+print(numpy.size(matrix,1)) # Columns
+
+import matplotlib.pyplot as pyplot
+import numpy
+n = 10
+x = range(n)
+y = numpy.random.randn(n)
+pyplot.scatter(x, y)
+pyplot.show()
+
+------------------------------------------------------------------------------------------------
+
+Section 2
+
+------------------------------------------------------------------------------------------------
+
+//This is C++ code
+
+extern "C"
+{
+    int cpp_vec_cpy(double * x, int size, double * y);
+}
+int cpp_vec_cpy(double * x, int size, double * y){
+    for(int i=0;i<size;++i){
+        y[i]=x[i];
+    }
+    return 0;
+}
+
+g++ -fPIC -Wall -std=c++14 -O3 -shared -o cpp_example.so cpp_example.cpp
+
+#This is Python code
+
+import numpy
+import ctypes
+from numpy.ctypeslib import ndpointer
+lib = ctypes.cdll.LoadLibrary("./cpp_example.so")
+fun = lib.cpp_vec_cpy
+fun.restype = int
+fun.argtypes = [ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"), \
+                ctypes.c_int, ndpointer(ctypes.c_double, flags="C_CONTIGUOUS")]
+def wrapper_vec_cpy(x,y):
+    assert x.size == y.size
+    fun(x, x.size, y)
+
+vsize=20
+x = numpy.ones(vsize)
+y = numpy.empty(vsize)
+wrapper_vec_cpy(x, y)    
+print(y)
+
+int cpp_eig(double *matrix_values, int matrix_size, double *eigvr, double *eigvi)
+
+------------------------------------------------------------------------------------------------
+
+Section 3
+
+------------------------------------------------------------------------------------------------
+
+!This is Fortran 90 code
+
+subroutine fortran_vec_cpy(x,n,y) bind(c,name='fortran_vec_cpy')
+    use, intrinsic :: iso_c_binding, only: c_double, c_int
+    use, intrinsic :: iso_fortran_env
+    implicit none
+    integer(c_int), intent(in) :: n
+    real(c_double),dimension(*), intent(in) :: x
+    real(c_double),dimension(*), intent(out) :: y    
+    integer(c_int) :: i
+
+    do i=1,n
+        y(i)=x(i)
+    end do
+end subroutine
+
+//This is C++ code
+
+extern "C"
+{
+    void fortran_vec_cpy(double * x, int & size, double * y);
+    int cpp_vec_cpy(double * x, int size, double * y);
+}
+int cpp_vec_cpy(double * x, int size, double * y){
+    fortran_vec_cpy(x,size,y);
+    return 0;
+}
+
+g++ -fPIC -c -Wall -std=c++14 -O3 -DNDEBUG -o cpp_example.o cpp_example.cpp
+gfortran -c -O3 -fPIC -o fortran_example.o fortran_example.f90
+g++ -fPIC -shared -o cpp_example.so fortran_example.o cpp_example.o -lstdc++ -lgfortran
+
+subroutine f_eig(mptr, matrix_size, eigvr, eigvi) bind(c, name='fortran_eig')
+  type(c_ptr), value, intent(in) :: mptr
+  integer(c_int), intent(in) :: matrix_size
+  real(c_double), dimension(matrix_size), intent(out) :: eigvr, eigvi
+
+------------------------------------------------------------------------------------------------
+
+Section 4
+
+------------------------------------------------------------------------------------------------
+
+!This is Fortran 90 code
+
+subroutine f_eig(mptr,n,eigvr,eigvl) bind(c,name='fortran_eig')
+!...
+  interface
+    subroutine av(A, n, x, y) bind (c,name="avc")
+      use iso_c_binding, only: c_ptr, c_int, c_double
+      type(c_ptr), value, intent(in) :: A     
+      integer(c_int) ::  n
+      real(c_double), intent(in) :: x(*)
+      real(c_double), intent(out) :: y(*)
+    end subroutine av
+  end interface
+!...
+end subroutine  
+
+void avc(double A[], int & matrix_size, double x[], double y[]);
+
+subroutine f_eig(cpp_fun_ptr, mptr, n, eigvr, eigvl) bind(c,name='fortran_eig')
+  use,intrinsic :: iso_c_binding, only: c_double, c_int, c_funptr, c_f_procpointer
+  !...
+  abstract interface
+    subroutine cpp_mv_interface (A,n, x, y)
+    !... define variables as before
+    end subroutine
+  end interface
+  type(c_funptr),value :: cpp_fun_ptr
+  procedure(cpp_mv_interface), pointer :: fortran_fun_ptr
+  call c_f_procpointer (cpp_fun_ptr, fortran_fun_ptr)
+  !...
+  !use function pointer(s)
+  call fortran_fun_ptr(A, n, x, y)
+  !...
+end subroutine
+
+extern "C"
+{
+    void fortran_eig(void (*funptr)(double A[],int & n,double x[], double y[]) , ...);
+    void avc(double A[], int & n, double x[], double y[] );
+    ... 
+}
