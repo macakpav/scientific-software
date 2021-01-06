@@ -1,0 +1,186 @@
+\documentclass[a4paper]{article}
+
+\usepackage{sectsty}
+\usepackage{graphicx}
+
+\sectionfont{\fontsize{12}{15}\selectfont}
+
+\title{Scientific Software / Technisch-wetenschappelijke software: Assignment 3}
+\author{Firstname Lastname}
+
+\usepackage{csvsimple}
+
+
+
+\begin{document}
+
+\maketitle
+
+Number of hours spent: 27
+
+\section{What changes did you make to your code after feedback? Do you wish to comment on your previous report?}
+\begin{itemize}
+	\item Defined user-defined type to store parameters as recommended in general feedback (therefore also removed getter functions for the parameters)
+	\item The norm used in Newton's method was made relative to size of initial population.
+	
+\end{itemize}
+In previous assignment I used \texttt{select\_real\_kind} to select the working precision of real numbers. I used this function, because the kind parameter in \texttt{real(kind)} type specification is compiler dependent, but the function makes sure that the selected kind has sufficient storage capacity/precision.
+
+As for the difference in exponential growth for different $ r $ parameter, the difference is in steepness of the growth. Concretely for $ r=0.1 $ and $ r=0.125 $ 
+is the difference in order of magnitude. In other words, a relatively small change in infection rate has huge impacts in first days of epidemic. It was also interesting, that for the higher $ r $ the rounded results in different precision differ only by 1, while for $ r=0.1 $ by 3, which surprisingly means bigger relative difference, although working with smaller numbers. 
+
+Regarding the overkill with getter functions for SIQRD variables, I made this at beginning of coding, because I felt that I could make an error while using the indices explicitly and this bug would be kind of hard to find. In terms of speed however, it would probably be better to get rid of these function calls. 
+
+\section{What changes did you have to make to your code in order to implement the new functionality in your existing program?}
+\begin{itemize}
+	\item global parameters N and T were removed and are now contained in the \texttt{simulationParametrs}
+	\item $ \Delta\beta $ and target value for the optimization are also stored in \texttt{simulationParametrs}
+	\item The \texttt{simulateSIQRD} subroutine no longer writes the results by itself. Instead it accepts a (pre-allocated) scratch array argument, where it stores and returns the results of the simulation. Further manipulation with this data is done outside this routine - meaning they are either written to file (program \texttt{SIQRDsimulate}), or only used in optimization to evaluate $ F(\beta) $. This is arguably slower approach than if I would only copy-paste the \texttt{simulateSIQRD} subroutine and modify it to only return the maximum number of infected. This, however faster, would be a less clean approach and also changing $ F(\beta) $ would then be a bit more complicated, than just operating on data from simulation (copy pasting the routine again, saving some other output).
+\end{itemize}
+
+\section{Comment on the choices you made when implementing the code for finding the optimal $\beta$. Which convergence criterion did you use? How did you perform your timings? Where do you allocate memory? \dots}
+For the new program called \textit{SIQRDoptimze} a few methods were created. Firstly the main optimization loop called \texttt{optimizeSIQRD} which takes among others the simulation parameter to optimize (which shall be a member variable of \texttt{simulationParametrs}), the method to evaluate $ F(\beta) $ (or possibly other quantity) and the target value. It then implements the Newton's iteration method using the approximated derivative. I briefly considered using the Newton's method implemented previously, but I decided to write it explicitly again to save the time spent converting the real arguments to 1x1 matrices and also putting restriction on size of step that Newton's method takes. The second subroutine defined in this module is \texttt{maxInfected}, which corresponds to $ F(\beta) $ only takes the results of \texttt{simulateSIQRD} and returns the maximum number of infected at any point in time. It is given to \texttt{optimizeSIQRD} as an argument, so it can be easily swapped with a different $ F(\beta) $ evaluator.
+
+
+As for the convergence criteria, the norm $ \frac{|F(\beta)-targetValue|}{|targetValue|} $ is compared to a set tolerance, which consists of a base tolerance and the $ \Delta \beta $ step, but is limited by precision of the used floating point format.
+
+For routine timing, the \texttt{tic} and \texttt{toc} subroutines from the exercise sessions were used, also using cpu time.
+
+In simulation and optimization programs all memory is allocated after reading parameters from file and command line. The allocated \texttt{scratchMatrix} is then passed throughout subroutines and used to store results of \texttt{simulateSIQRD}.
+
+
+\section{Place your three tables for forward Euler, backward Euler and Heun here. What do you observe? Explain any unexpected results. Which algorithm did you pick and why?}
+It is obvious that the convergence speed is heavily affected by the precision of the derivative approximation. For the first few $ i $, the error in the derivative is dominant. Comparing Euler's forward method in Table \ref{tab:eulerforward} and Heun's method in Table \ref{tab:heunmethod} we should also state, that combining a higher order accuracy method for simulating \textit{SIQRD} equations with a first order approximation of derivative does not yield improvement over using simple Euler's forward method for the simulation (in terms convergence speed, the resulting $ \beta $ is of course different).
+
+Another important note is about decreasing of $ \Delta\beta $. As it can be seen from the tables for high values of $ i $, it does not necessarily lead to faster convergence. This is simply because the values of $ F(\beta) $ are also calculated with error and the perturbations to $ \beta $ are too small for the simulation to provide accurately different results of $ F(\beta) $. Also, we are adding a number that is of much smaller order compared to order of $ \beta $ which in our case is $ 10^{-1} $ and this can get easily lost due to limited floating point precision. The approximately computed derivative can then produce wrong result (even in terms of wrong \textbf{sign}), even if $ F(\beta) < F(\beta+\Delta\beta) $ should theoretically still hold. This causes severe "confusion" for the Newton's iteration method.
+
+For Euler Backward method (Table \ref{tab:eulerbackward}) the small perturbations are even bigger problem because of more operations (and thus more rounding) performed during the simulation. 
+
+To further support this explanation, I also tried this using single precision, which obviously failed to produce any viable result for higher $ i $, since the $ \Delta \beta $ is so small that the adding it to single precision $ \beta $ is like adding zero. This of course results in the approximated $ dF(\beta) $ being equal to zero and failure of the Newton's method.
+
+\begin{table}[h!]
+	\parbox{.45\linewidth}{
+		\centering
+		\begin{tabular}{c|c|c|c}%
+			\bfseries $ i $ & \bfseries $ \beta_{opt} $ & \bfseries time & \bfseries iter
+			\csvreader[head to column names]{data/eulerForward.csv}{}
+			{\\\hline\deltaBeta\ & \optimalBeta & \computationTime & \iterations}
+		\end{tabular}
+		\caption{Using Euler's forward method}
+		\label{tab:eulerforward}
+	}
+	\hfill
+	\parbox{.45\linewidth}{
+		\centering
+		\begin{tabular}{c|c|c|c}%
+			\bfseries $ i$ & \bfseries $ \beta_{opt} $ & \bfseries time & \bfseries iter
+			\csvreader[head to column names]{data/heun.csv}{}% use head of csv as column names
+			{\\\hline\deltaBeta\ & \optimalBeta & \computationTime & \iterations}% specify your coloumns here
+		\end{tabular}
+		\caption{Using Heun's method}
+		\label{tab:heunmethod}
+	}
+\end{table}
+\begin{table}[h!]
+	\centering
+	\begin{tabular}{c|c|c|c}%
+		\bfseries $ \Delta\beta $ & \bfseries $ \beta $ & \bfseries time & \bfseries iterations
+		\csvreader[head to column names]{data/eulerBackward.csv}{}% use head of csv as column names
+		{\\\hline\deltaBeta\ & \optimalBeta & \computationTime & \iterations}% specify your coloumns here
+	\end{tabular}
+	\caption{Using Euler's backward method}
+	\label{tab:eulerbackward}
+\end{table}
+
+\section{What effect do the optimization flags have? Are there other flags which may be useful when compiling your code?}
+For this part I chose to inspect the code with Euler's forward simualtion. It is simple, does not "waste" time on higher order of accuracy like Heun and is not prone to fail with small perturbations of $ \beta $ like Euler's backward method. The difference in final $ \beta $ between Euler's and Heun's method is also really small to really matter since when tweaking the parameter "in real life" by passing various restrictions, we definitely cannot predict their effect with $ 0.001 $ accuracy, so any difference there does not really matter in my point of view.
+
+Firstly, the optimization flag \texttt{-O3} overall improved speed. Using \texttt{-funroll-loops} does not yield improvements even slowing down the program for some values of $ i $. Further, the flag \texttt{-flto} was tried, which should allow the compiler to inline functions (like C++ \texttt{inline}). This resulted in additional speedup, which got a bit canceled if the flag is used together with \texttt{-funroll-loops}. Not sure if it is neccessary to provide the tables for this, I put them in Section \ref{sec:appendix1}.
+
+\section{What do you see when you run your code under valgrind?}
+Valgrind said that all allocated blocks were freed and so no leaks are possible. Also the cache miss rate was about $ 0.2\% $, which I would consider quite good given that no time was spent on optimizing the procedures.
+
+\section{Did you test on different compilers?}
+For gfortran and ifort there was no difference and thus no changes in code. 
+
+For nagfor however, the optimization flags somehow broke the assumption, which the routine optimize makes, that the \texttt{tweakedParameter} is a member variable of \texttt{simulationParameters} and when it changes, it should affect he \texttt{simulationParameters} as well. For this I had to add two lines that explicitly assign the \texttt{optimizeSIQRD} to \texttt{simulationParameters\%beta}, which in turn breaks the generality of the routine (before this it was not hardcoded in \texttt{tweakParameter} subroutine that we are optimizing specifically $ \beta $).
+
+After this incident, maybe I should not have switched to user type structure for the simulationparameters and should have rather stayed at the 1D-array that I used before. Than the \texttt{tweakedParamter} could be represented only by an index in this array, which should work generally even with optimization flags.
+
+\section{Which LAPACK routine did you select for the eigenvalue computation? Which subroutine parameters do you use? Which ones do you not use? Why?}
+
+For this program the selected routine is \texttt{dgeev}. Firstly I use this routine to determine the optimal size (using its parameter work) for scratch array \texttt{work}, which is then allocated and the routine is run again to actually compute the eigenvalues. In terms of output I only use the real parts of eigenvalues, but the routine also computes the imaginary parts, which are unnecessary to judge the stability. The routine could compute eigenvectors as well but this is also not needed and the routine knows this thanks to the first two inputs 'N'. The parameter info is used at each step to determine if everything went smoothly. 
+
+\section{What are the eigenvalues that you compute?}
+For the first file are
+\begin{equation}
+0.0, \,\,\,\,  0.0, \,\,\,\,  -0.0, \,\,\,\,  -2.50000E-01,  \,\,\,\, -5.00000E-02,
+\end{equation}
+meaning that for this set of parameters the equilibrium point is stable.
+
+For the second file
+\begin{equation}
+	0.0 ,\,\,\,\,  0.0 , \,\,\,\, -0.0, \,\,\,\,  -2.50000E-01,  \,\,\,\,  1.50000E-01,
+\end{equation}
+meaning that for this set of parameters the equilibrium point is unstable.
+
+\section{Appendix 1} \label{sec:appendix1}
+\begin{table}[h]
+	\parbox{.45\linewidth}{
+		\centering
+		\begin{tabular}{c|c|c|c}%
+			\bfseries $ i $ & \bfseries $ \beta_{opt} $ & \bfseries time & \bfseries iter
+			\csvreader[head to column names]{"data/eulerForward_O0.csv"}{}
+			{\\\hline\deltaBeta\ & \optimalBeta & \computationTime & \iterations}
+		\end{tabular}
+		\caption{Using Euler's forward method \texttt{-O0}}
+		\label{tab:O0}
+	}
+	\hfill
+	\parbox{.45\linewidth}{
+		\centering
+		\begin{tabular}{c|c|c|c}%
+			\bfseries $ i $ & \bfseries $ \beta_{opt} $ & \bfseries time & \bfseries iter
+			\csvreader[head to column names]{"data/eulerForward_O3.csv"}{}
+			{\\\hline\deltaBeta\ & \optimalBeta & \computationTime & \iterations}
+		\end{tabular}
+		\caption{Using Euler's forward method \texttt{-O3}}
+		\label{tab:O3}
+	}
+	\hfill
+	\parbox{.45\linewidth}{
+		\centering
+		\begin{tabular}{c|c|c|c}%
+			\bfseries $ i$ & \bfseries $ \beta_{opt} $ & \bfseries time & \bfseries iter
+			\csvreader[head to column names]{"data/eulerForward_O3loops.csv"}{}% use head of csv as column names
+			{\\\hline\deltaBeta\ & \optimalBeta & \computationTime & \iterations}% specify your coloumns here
+		\end{tabular}
+		\caption{Using Euler's forward method \texttt{-O3 -funroll-loops}}
+		\label{tab:03loops}
+	}
+	\parbox{.45\linewidth}{
+		\centering
+		\begin{tabular}{c|c|c|c}%
+			\bfseries $ i $ & \bfseries $ \beta_{opt} $ & \bfseries time & \bfseries iter
+			\csvreader[head to column names]{"data/eulerForward_O3inline.csv"}{}
+			{\\\hline\deltaBeta\ & \optimalBeta & \computationTime & \iterations}
+		\end{tabular}
+		\caption{Using Euler's forward method \texttt{-03 -flto}}
+		\label{tab:O3inline}
+	}
+	\hfill
+	\parbox{.45\linewidth}{
+		\centering
+		\begin{tabular}{c|c|c|c}%
+			\bfseries $ i$ & \bfseries $ \beta_{opt} $ & \bfseries time & \bfseries iter
+			\csvreader[head to column names]{"data/eulerForward_O3both.csv"}{}% use head of csv as column names
+			{\\\hline\deltaBeta\ & \optimalBeta & \computationTime & \iterations}% specify your coloumns here
+		\end{tabular}
+		\caption{Both additional optimization flags}
+		\label{tab:O3both}
+	}
+\end{table}
+
+
+
+\end{document}

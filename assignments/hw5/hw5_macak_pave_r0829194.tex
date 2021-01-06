@@ -1,0 +1,92 @@
+\documentclass[a4paper]{article}
+\usepackage[a4paper, margin=3cm]{geometry}
+\usepackage{listings}
+\usepackage{framed}
+\usepackage{xcolor}
+
+\title{\large Scientific Software / Technisch Wetenschappelijke Software \\ Homework Assigment 5}
+
+\author{If I do not change this, the person grading my report will not know who I am!\\ It could be a good idea to change this before writing my report.}
+
+\date{}
+
+
+\lstset{
+	language=c++,
+	%    basicstyle={\ttfamily \small},
+	basicstyle={\ttfamily \small},
+	%    keywordstyle=\underline,
+	numberstyle={\footnotesize},
+	%    morekeywords={ones,mod,isprime,inline,unique,factor,@},
+	%    flexiblecolumns=false,
+	%    emph={gamma,beta},
+	%    emphstyle=,
+	columns=fullflexible,
+	%    columns=flexible,
+	%    commentstyle={\slshape},
+	%    commentstyle={\normalfont},
+	commentstyle={\ttfamily},
+	stringstyle={\ttfamily \bfseries},
+	showstringspaces=false,
+	tabsize=4,
+	%    indent=1em,
+	%    xleftmargin=0.5em,
+	breaklines=false,
+	%    frame={l},
+	captionpos={t},
+    moredelim=**[is][\color{red}]{@}{@},
+	upquote=true, % such that we can copy-paste the code...
+	%    mathescape=true,
+	%    frame=single,     % boxed in a single line
+	%    frame=L,          % double line on the left
+	%    frame=l,          % single line on the left
+}
+
+\newcommand{\answer}[1]{\vspace{-0.75em}\begin{framed} #1 \end{framed}\vspace{-0.75em}}
+
+\begin{document}
+
+\maketitle
+\section*{Practical info}
+\begin{itemize}
+\item Time spent: 0 hours %Update to match your number
+\end{itemize}
+
+\section*{Assignment}
+\subsection*{Q1}
+Describe the difference between the 6 different implementations and derive their asymptotic complexity. Mention the advantages and disadvantages of Expression Templates.
+
+%\subsection*{Q2}
+%What memory improvements did you make to \verb|xtx_op3|?
+%\begin{lstlisting}
+%template<typename Xmat,typename Scalar>
+%class xtx_op3{
+%	@place your modifications in between these@
+%	private:
+%		Xmat X;
+%		Scalar beta;
+%	
+%	public:
+%	xtx_op3(Xmat const X_, Scalar beta_):X(X_),beta(beta_){
+%		assert(X.num_rows()>0);
+%		assert(X.num_columns()>0);
+%	}
+%	
+%	template<typename V>
+%	void operator()(V const & x, V & y) const {
+%		assert(X.num_columns()==y.size());
+%		assert(X.num_columns()==x.size()); 
+%		tws::vector<Scalar> t=X*x;
+%		y=tws::transpose(X)*(t)+beta*x;      
+%	}
+%};
+%\end{lstlisting}
+%\answer{
+%Explain your modifications.
+%}
+%\subsection*{Q3}
+%Where and how would you warn the user for the potential increase in computation time of implementations \verb|xtx_op1| and \verb|xtx_op2|.
+%\answer{}
+
+
+\end{document}

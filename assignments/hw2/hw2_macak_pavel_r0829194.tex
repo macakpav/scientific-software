@@ -1,0 +1,91 @@
+\documentclass[a4paper]{article}
+\usepackage[a4paper, margin=3cm]{geometry}
+\usepackage{framed}
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{epstopdf}
+
+\title{Homework Assigment 2: Matrix competition \\ \large Scientific Software / Technisch Wetenschappelijke Software 2020}
+
+\newcommand{\answer}[1]{\vspace{-0.75em}\begin{framed} #1 \end{framed}\vspace{-0.75em}}
+
+
+\author{Firsname Lastname} % Update with your name
+\date{}
+\begin{document}
+
+\maketitle
+\section*{Practical info}
+\begin{itemize}
+\item Time spent: \textit{ 12 hours} %Update to match your number. Exclude the time spend on the self study.
+\item Tests were run on machine: \textit{borgworm}
+\end{itemize}
+
+
+\subsection*{Questions}
+% NOTE: you can use mmm to abbreviate matrix-matrix multiplication
+\begin{itemize}
+	\item[\textbf{Q1}:] What is the computational complexity of the straight-forward implementation of the matrix-matrix multiplication of two $N\times N$, double precision floating point matrices? (1 line)
+	\answer{$ O(n^3) $}
+	\item[\textbf{Q2}:] What is the memory usage of the straight-forward implementation of the matrix-matrix multiplication of two $N \times N$, double precision floating point matrices? (1 line)
+	\answer{$ 3 \cdot n^2 \cdot 8 $ bytes}
+	\item[\textbf{Q3}:] Compile \texttt{mm\_driver.f90} with each of the following compilers: gfortran, ifort\footnote{ If you get a segmentation fault, adding the flag \texttt{-heap-arrays 0} might resolve the problem.} and nagfor. Use for all compilers the \texttt{-O3} optimisation flag. Do you notice a difference between the compilers? (9 lines)
+	\answer{
+	The \textit{ifort} compiler shows the best performance for almost all implementations. The most notable difference is for three nested loops implementations. Here it looks like \textit{ifort} even tried to rearrange the loops, so that it minimizes cache misses, because all implementations have almost identical run-time regardless of the original iteration order of $ i,\,j,\,k $ indices. Regarding BLAS implementation, here the run-time for each compiler is almost identical (highest observed relative difference of 4\% in run-time). Surprisingly, \textit{gfortran} has the best performance of the intrinsic function \textit{matmul} sometimes even beating blas. \textit{Ifort}, which excels everywhere else has a really slow \textit{matmul} intrinsic with run-time comparable to three nested loops. \textit{Nagfor} compiler has roughly same run-time for every implementation as \textit{gfortran} except the mentioned \textit{matmul} intrinsic.
+}
+	\item[\textbf{Q4}:] Compile \texttt{mm\_driver.f90} with the gfortran compiler and the following compiler flags\footnote{More information on the compiler options that control the optimization level can be found on \texttt{https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html} }: \texttt{-O0}, \\ \texttt{-Og -fbounds-check} and \texttt{-O3 -funroll-loops}. Discuss the results. What is the role of the different compiler flags? What do you conclude? (5 lines)
+	\answer{
+		The \texttt{-Og} optimization is for debuging as well as the \texttt{-fbounds-check} flag. This would suggest that it would have the worst run-time. Suprisigly it performs slightly better than program with no optimization \texttt{-O0}. The \texttt{-O3} optimization level is optimized for speed and has the best run-time as expected. A bit surprising was that, the loop unrolling only helps only in case of the better algorithms like fastest three nested loops (both original and blocked), blas or Strassen, but slows down already slow implementations (\texttt{mm\_ikj}).
+	}
+	\item[\textbf{Q5}:] For gfortran using the optimization flags \texttt{-O3 -funroll-loops}, which method with three nested loops is the fastest? (1 line)
+	\answer{\texttt{mm\_jki}}
+	\item[\textbf{Q6}:] For gfortran using the optimization flags \texttt{-O3 -funroll-loops}, which method with three nested loops is the slowest? (1 line)
+	\answer{\texttt{mm\_ikj}}
+	\item[\textbf{Q7}:] Explain the difference in execution time between these two methods. Try to be as detailed as possible. Highlight the important concepts. (10 lines)  
+	\answer{
+	The \texttt{jki} implementation is the fastest simply because it follows the column oriented storage of matrices in FORTRAN and thus \textbf{minimizes cache misses}. The index $ i $ represents rows in two matrices (A and C) and is iterated through the fastest and because it uses all the data loaded in each cache line, there is no wasted memory operation. Following is the index $ k $, which represents rows of matrix B, but also columns in matrix A, which does not necessarily result in a cache miss. Considering, that we already used the previous column of matrix A, the change of $ k $ does not mean jumping from one place in memory to another but simply continuing ($ a_{n,k-1} $ is in memory followed by $ a_{1,k} $). When the index $ j $ is changed it could produce a cache miss in both data of matrix B and C. Thus it is unsurprising that iterating through this index a lot produces the slowest three nested loops implementations - \texttt{mm\_ikj} as well as \texttt{mm\_kij}, whose run-time is almost identically bad, but slightly worse for the first one. For big matrices which cannot fit even a single column into cache, two cache misses are made every iteration of $ j $ and one miss when iterating $ k $. 
+}
+	\item[\textbf{F1}:] Use the output of \textbf{I2} (compile with \texttt{gfortran -O3 -funroll-loops ...}) to make a figure that shows the number of floating point operations per second in function of $N$ of the fastest and slowest method with three nested loops.
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=0.65\linewidth]{flops}
+		\caption[Three nested loops]{Measured MFLOP/s for different matrix sizes.}
+		\label{fig:flops}
+	\end{figure}
+			
+	\item[\textbf{Q8}:] Briefly discuss Figure \textbf{F1}. Avoid repeating information from \textbf{Q7}. (8 lines)
+	\answer{ 
+	For very small matrices, the slowdown effect of memory operations is very small, since all (or big part) of the data can still fit into cache, so both algorithms have almost the same arithmetic intensity. Once the matrices can no longer fit into lower levels of cache, the effect on speed of $ IKJ $ implementation is enormous. The faster implementation keeps a very high arithmetic intensity for longer, because it operates on all of the data loaded in a single cache line. It can also be observed that from matrix size around $ n=900 $, the matrices have to be probably stored in and loaded from main memory and there is no change in arithmetic intensity after this point.
+}
+	\item[\textbf{Q9}:]  Why would you use blocking? What are good values for the block size given the memory architecture of your machine\footnote{you can use \texttt{lscpu | grep cache} or \texttt{getconf -a | grep CACHE} to inspect the cache sizes of your machine}? \textbf{Limit your answer to a theoretical discussion, there is no need to test your actual value.} When using blocking, does it matter which routine you use for the multiplications on block level? Why? (15 lines) 
+	\answer{
+	Blocking can be a way to minimize cache misses (taking advantage of spatial locality) or, in other words, to make use of the whole chunk of data loaded into cache before having to load a new one. In the ideal scenario the block size should be such that the data we want to operate on (the three matrices) should all fit into lowest level cache. When all the data are stored in fast memory, the CPU can access them very quickly and is kept busy, which leads to higher arithmetic intensity. It definitely matters less which implementation is used for multiplication on block level (as can be seen from Fig.\ref{fig:flops} at lowest sizes $ n $), but I think it can still influence the final speed, because it is faster if the processor makes use of a whole cache line in one go instead of having to jump from one line to another (alternating between discontinuous memory chunks), which could be the case for the slowest implementation for example. The slowdown of "jumping" between cache lines is of course much smaller in comparison to the slowdown of actual cache miss. This is supported by the fact that both the block implementations have very similar run-time (the slow \textit{ikj} does not fall so much behind).
+}
+	\item[\textbf{Q10}:] You can use \texttt{valgrind --tool=cachegrind ./executable} with \texttt{executable} the name of your executable to simulate the cache architecture of your machine. For the fastest and slowest implementation with three nested loops, compare the memory efficiency of the variant without blocking and the blocked variant for blocksizes 25, 100 and 500. Also compare the execution time of these variants (run them without \texttt{valgrind}). Write several short programs to perform this experiment and compile them with \texttt{gfortran -O3 ...}. Use $N$ equal to 2000 for the fastest method and $N$ equal to 1500 for the slowest method. Discuss your results. (10 lines)
+	\answer{
+		First thing we can notice from output of \textit{cachegrind} from non-blocked slow implementation that for reading data from low level cache a miss happens in 99\% of the attempts. The miss-rate in high level cache is not so high but is probably responsible for the biggest slowdown, because these cache misses no longer happen for block size of 500, where the run-time for the slowest implementation gets reduced \textbf{by} 87\% (in comparison to the non-blocking implementation). The jump is not negligible even for the fastest implementation, where the run-time is reduced by 33\%. Additional speedup is achieved by further reducing the block size to 100. This has a big impact on the number of accesses to slow memory in slowest implementation. Also the miss-rate in low level cache starts decreases significantly (from 99 to 7\%), causing an additional speedup. For block size of 25, the miss-rate in all levels of cache drop under 1\% for both implementations, while still being slightly higher for the slowest, which can explain the small difference in run-time (which is about 1\% for this block size).
+}
+	\item[\textbf{F2}:] As in \textbf{F1}, plot the number of floating point operations per second in function of $N$ for \texttt{mm\_blocks\_a} and $N$ between 100 and 1600 using a blocksize of 100.
+	\begin{figure}[h]
+		\centering
+		\includegraphics[width=0.65\linewidth]{flopsBlocking}
+		\caption[Flops blocking]{Arithmetic intensity for blocking implementation of $jki$, block size 100}
+		\label{fig:flopsblocking}
+	\end{figure}
+	
+	\item[\textbf{Q11}:] Briefly discuss the difference between \textbf{F1} and \textbf{F2}. (2 lines)
+	\answer{
+	The blocking algorithm retains a high arithmetic intensity even for matrices with $ n>400 $, because the data for the CPU are always ready in cache, as it was the case for smaller matrices.
+}
+	\item[\textbf{Q12}:] Discuss briefly the practical relevance of the divide and conquer algorithm. A reference implementation - which assumes  $N=2^k$- is provided in \texttt{matrixop.f90}. (3 lines)
+	\answer{
+	The biggest advantage of divide and conquer algorithm is cache obliviousness, meaning its performance should stay the same regardless of memory architecture, number of memory layers or their size. This could be very useful for cases when the matrices can no longer fit even into RAM and virtual memory of hard disk has to be used. The downside is that it is a recursive algorithm and thus can be poorly optimized by the compiler, so it is slower than the cache aware counterparts.
+}
+	\item[\textbf{Q13}:] Discuss briefly the practical relevance of the Strassen's algorithm. A reference implementation - which assumes  $N=2^k$- is provided in \texttt{matrixop.f90}. (3 lines)
+	\answer{
+	Strassn's algorithm is a modification of divide and conquer algorithm. It has the same properties with the advantage that it only does seven matrix multiplies of blocks, which influences speed in a positive way especially for very large matrices. On the other hand it could be a bit worrying that of all the methods it always has the highest relative error for all matrix sizes.
+}
+	\item[\textbf{Q14}:] How can you verify if a call of \texttt{mm\_blas} uses multiple cores? (2 lines)
+	\answer{Time the subroutine using both CPU time and system (wall clock) time. CPU time should be considerably higher than wall time if more processors were used at some point. }
+\end{itemize}
+\end{document}

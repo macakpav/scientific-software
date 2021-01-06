@@ -1,0 +1,18 @@
+r = 0.125
+gfortran:
+Number of people infected after 100 days will be:
+    13039239 (sp)
+Number of people infected after 100 days will be:
+    13039238 (dp)
+
+nagfor:
+Number of people infected after 100 days will be:
+    13039239 (sp)
+Number of people infected after 100 days will be:
+    13039238 (dp)
+
+ifort:
+Number of people infected after 100 days will be:
+    13039239 (sp)
+Number of people infected after 100 days will be:
+    13039238 (dp)
