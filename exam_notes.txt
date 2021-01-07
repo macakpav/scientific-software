@@ -1,0 +1,57 @@
+First Assignment(SIQRD)
+    Is it checking if your simulation method is accurate, or is it checking if your model is implemented correctly?
+        I think that the approach - comparing my implementation to someone else (from the articles) who uses the same model is a very good way to see if my implementation is correct (not the model though)
+
+    Select real kind
+        In previous assignment I used select real kind to select the working precision
+        of real numbers. I used this function, because the kind parameter in real(kind)
+        type speciffication is compiler dependent, but the function makes sure that the
+        selected kind has sufficient storage capacity/precision.
+
+    r values (more in Third Assignment)
+
+Second Assignment(matrixop)
+    Q1 computational complexity
+        n^3 * (1.add, 1.multipl and 1.assign) floating point operations 
+
+    Loop unrolling
+        increase temporal locality - setting up a for loop takes time (wiping pipeline, loading new code), 
+        loop unrolling reduces the number of loop setups if the for loop itself allows it (f.e. no tpossible for a(i+1) = a(i) + 10) 
+
+    Fbound checking
+        good for debugging but reduces speed performance of accessing an element - like asserts in C++ (without -DNDEBUG ofc) 
+
+    Blocking is temporal locality I didn't understand the difference correctly before
+        - it reuses the same data multiple times before loading new
+        - spatial locality makes use of the fact that the data are stored near each other (that is the difference in ijk implementations)
+
+Third Assignment (SIQRD parameters)
+    What other flags do you think are relevant? 
+        Debugging flags for checking access to arrays (array bounds)
+        For ifort the heap-arrays if large arrays are used (risk of stack overflow otherwise)
+        The -g flag which provides more debugging info when encountering error
+        -Wall/-debug full/-C=all flags to trun on even more warnings
+        -info flag for nagfor has some extra information/warnings on code style (long lines) and usage of old fortran standards (f.e. A(*) instead of A(:)) 
+        Underflow/overflow warning flags (in gfrotran it did not seem to work that good (based on the exercise with flag handling) )
+
+    r values 0.1 and 0.125
+        The 0.1 is not represented exactly in binary format - it is either more or less than 0.1 (depending on processor roudning mode) and the rounded value will of course differ for double and single precision (0.100000001 and 0.10000000000000001 when printed to console)
+        This error is amplified due to the r being raised to high power
+        On the other hand 0.125 is represented exactly in binary which explain why the results differ less even when changing precision.
+
+    Robust timings
+        Yes I should have probably used the same method as we did for the matricies - making multiple runs, discarding the first few timings ( for there could be some warm-up slowdowns ) and use the average over the rest.
+        It would make sense to program a routine which would run a piece of code multiple times and time it like
+    
+    50  call time_this( no_runs, no_discarded_runs [,timing method] ) ! with global variables to keep track of number of runs (like with like tic, toc subroutines)  
+        ...the code to time...
+        call time_this( done=done )
+        if .not. done goto 50
+
+        This would require the ugly goto statement but to me it looks cleaner than having a for loop around it, adding time and so on
+
+Fourth Assignment(C++ siqrd, CGM, BFGA)
+
+
+
+Fifth Assignment(expression templates)
