@@ -1,0 +1,32 @@
+
+Personal:
+
+Very good assignment. Your code is well written and clear. You also did a nice job on writing an explicit interface for the Lapack routines, if you needed these a lot in your code, this would definitely save you time debugging later. 
+
+In section 5 you only address optimization flags, what other flags do you think are relevant? 
+In your discussion of the differences between the values r = 0.1 and r = 0.125 in section 1 you are still missing something important. What is different in terms of the floating point representation of these two values? 
+Can you think of how to make your timings more robust, based on what you did during the second assignment?
+
+General:
+
+* Most people make use of either the iso_fortran_env module or the selected_real_kind function to determine the precision of their floating point values. I still occasionally come across the syntax "real(kind=8)" or "real(8)" in submissions. The reasons why this is a bad idea have been mentioned multiple times at this point. If you continue to do this, we will consider this to be a major mistake. Note that when using Lapack you should still not use this syntax. Lapack routines starting with an S expect the default REAL precision, while routines starting with a D expect DOUBLE PRECISION values. For the compilers that we are working with, these values correspond, respectively, with the IEEE 754 standard single and double precision data types, but the correspondence with kind constant values is left to the compiler as an implementation detail.
+
+* When using the S/DGEEV (as well as many other Lapack routines) it is preferable to compute the optimal size of the required workspace array by using a workspace query. If you are unsure what is meant by this, have a look at the documentation for the LWORK parameter here: http://www.netlib.org/lapack/explore-html/d9/d8e/group__double_g_eeigen_ga66e19253344358f5dee1e60502b9e96f.html
+
+* When making use of the backward Euler method within an optimization routine, you have to take two different error-tolerances into account. It does not make sense to keep refining the outer error-tolerance (on the optimization) if your numerical scheme's error already exceeds the outer error-tolerance. The same principle could apply to other parameters such as the time step size.
+
+* Some people decided to use an absolute error in the outer loop and set an error tolerance of e.g. 0.1, under the observation that a non-integer number of people has no meaning. This is good pragmatic thinking, making use of problem-specific information, but you should make sure when taking an approach like this that you do not run into other issues with your approach. If you are representing large values in single precision, then this absolute tolerance may never be met for example. Perhaps it would also be good to re-think the selected target value in the computation as well, given that this was provided as a maximum.
+
+* When printing out the number of iterations and timings for different values of Delta beta, most people correctly observe that the number of iterations decreases as Delta beta decreases, but at some point the number of iterations increases again. The gradient thus becomes more accurate up to a point, but then loses accuracy again. The reason for this loss in accuracy was covered is exercise session 2. So, if you were unable to explain this, have a look there.
+
+* Now that N and T are provided at run-time, it is necessary to use allocatable matrices. These matrices also have their downsides, which is something you could mention in your report.
+
+* A lot of people opted to use the timings.f90 code that was provided for the matrix competition to do their timings for this assignment. I will not fault you for this as this is indeed a good way to do timings. If you use our code, you should still motivate why you choose to use this code. Why does the approach to timings in this code work well in this case?
+
+* Some people observed in valgrind that their code does more allocations as the number of iterations increases. If you are repeatedly calling the same routine, which allocates memory, in a loop you could consider restructuring your code to pre-allocate this memory outside of the loop.
+
+* When discussing the optimization flags there is more to say than just stating that O3 is faster than O1. There is a reason that you would sometimes opt for a lower optimization level. In general, you want to consider two cases in terms of compilation flags: While developing you want to have a debug configuration. This means it should be easy for a debugger/valgrind to find out where issues are. Good ideas for flags in this configuration are to switch on as many warnings as possible, ensure that debug info is available with the -g flag, and ensure that optimization does not ruin your debug experience with the -Og flag. Once you have finished your development, you can consider generating a release version where you remove the debug information, increase the optimization level, and (potentially) remove some extra warnings.
+
+* When you are making observations in your report, it is important to be precise in your statements. For example, saying that a given algorithm is more precise than another is not the same as saying that that algorithm gives more accurate results for the test-case considered. Be careful about making overly general statements. Also, make sure that what you write is correct. If you think a compiler has a certain behavior when provided a certain flag, you should check this in the compiler's documentation. You should also not assume that this is the same for other compilers.
+
+* A significant number of students forgot to put their name on their report. Please pay attention to this in future. Also, please be sure to provide the number of hours you spend on the assignment.

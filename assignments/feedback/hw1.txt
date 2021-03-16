@@ -1,0 +1,5 @@
+Good assignment. Your implementation is clear. An individual function for each variable is however overkill, in my view. 
+
+ Although you do not mention this is section 3, I see that you opted for the selected_real_kind function in order to specify wp. Can you ellaborate on why? 
+
+In section 5, you should have a look at the difference in the results achieved by r=0.1 and r=0.125. Can you see a difference in behavior here?

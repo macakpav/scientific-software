@@ -1,0 +1,36 @@
+ndividual feedback:
+
+Very good assignment. 
+Q4: What is the role of loop unrolling? 
+Q8: Why does the number of MFLOP/s increases for small N? Q9: Is blocking spatial or temporal locality?
+
+General feedback assignment 2:
+ - Carefully proofread your answers before submitting. I found a lot of small mistakes that could have been avoided. When submitting code make sure that it works, compiles and does not give segmentation faults. 
+
+- What is RAM? The wikipedia page already provides a good starting point: https://en.wikipedia.org/wiki/Random-access_memory.
+
+- Use the course material. A lot of the answers can be found in Writing Scientific Software. Some of you refer to external sources, while these concepts are much better explained in the book. Use the index to easily look up the requiered concepts.
+
+Specific feedback for several questions.
+Q 1 and 2: Do not forget the unit. The assignment did not ask for the asymptotic complexity.
+Q 3: Most of you noticed that ifort changes the loop order.
+Q 4: What is the advantage of loop unrolling? When should you use -fbounds-check?
+Q 7: 
+a) It was asked to highlight the most important concepts. This was missing in almost 50% of the submissions.  Some important concepts that you could have highlighted are cache hit, cache line, column-oriented, spatial locality and the processor-memory performance gap. 
+b) There is a difference between iterating over rows and iterating over the row index.
+c) The used matrices are too small to suffer from page thrashing. Page thrashing occurs when the matrices no longer fit in main memory.
+Q8: Almost nobody discusses the rise in MFLOP/s for small N. You should be able to explain this using the videos from the preparation.
+Q9:
+a) I encountered claims like: "When the blocksize is chosen correctly, the data should only be read once." or "If a block fits in L1, then it also fits in L3."  -> These claims do not paint the complete picture. It is true that for the operations on blocklevel the block is only loaded once, but the blocks themself are loaded multiple times. This is why the blocksize should be as large as possible, such that the number of block loads is as small as possible (otherwise a block size of 1 would be optimal). Furthermore, because modern computers have multiple layers of cache everything gets a bit more complicated. For example, a blocksize that fits in L1 can increase the number of L2 and L3 cache misses (which can be seen in q10 and which explains why a blocksize of 100 is faster than a blocksize 25 for mm_blocks_a). A good choice of the blocksize thus depends on a lot of factors. 
+b) There is a difference which method is used on block level, although the difference is much smaller. Firstly, the number of slow memory accesses might be the same, but not the order in which they occur. Due to the pipeline and out-of-order execution this might have an effect on the execution time. Most importantly, vectorized operations such as mulpd can only be used when the elements are in consequtive memory slots. 
+Figures: The correcte spelling is MFLOP/s and not MFLOPS or MFLOPS/s. The SI abbreviation for seconds is s and not sec (which is a measure for the sugar level in champagne).
+I1: Carefully read the documentation of system_clock in the Fortran 2003 standard. How can you make sure that your code is compiler independent.
+I2: 
+a) I saw a lot of 10**6, 10.**6, 10**6., 10.**6. and 1000000. In this case the compiler will insert the correct literal, but there is a big difference (in execution time) between these variants when working with variables. The correct expression is 1.e6.
+b) Especially for small matrices it does not suffice to perform only one timing.
+I3: Some of you make unnecessary copies in your BLAS call. How can this be avoided? What is the role of the leading dimension argument?
+
+The following individual feedback contains some questions that you can expect during the oral defence.
+
+
+

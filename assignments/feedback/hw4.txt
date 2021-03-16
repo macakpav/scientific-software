@@ -1,0 +1,113 @@
+Personal:
+
+Excelent assignment.
+General feedback: 1, 6, 16
+Individual feedback: Very good implementation.
+
+General:
+
+The distribution of the scores for this assignment is quite bimodal: there is a group of students with very good assignments and another group with significantly lower grades. The common theme for this last group is that the assignment is addressed solely as a programming exercise. With this I mean that the code is implemented without thinking about the important concepts of scientific software such as memory usage, performance, verifying correctness and modularity. It is therefore possible that someone with code that does not work (but that is written according to the aforementioned principles of scientific software) has a significantly higher grade then someone who has code that returns the correct result but that does not adhere to these principles.
+
+
+Memory usage and unnecessary allocations
+
+1) Unnecessary memory allocations. In the numerical methods to solve the initial value problem, there are two ways to return the right-hand side, f(x(t)). In the following example I illustrate these two approaches for the forward Euler method
+
+
+Method 1:
+
+ublas::vector               f(ublas::vector                 const& x){               
+
+    return result;
+
+}
+
+...
+for( … ) { // loop till end of simulation horizon
+
+    xkp1 = xk + h*f(xk); 
+
+}
+
+… 
+
+
+Method 2:
+
+void f(ublas::vector               const& x, ublas::vector                 & y){               
+
+    y<<= … ;
+
+}
+
+...
+ublas::vector               fx;       
+for( … ) { // loop till end of simulation horizon
+
+    f(x,fx);
+
+    xkp1 = xk + h*fx;
+
+}
+
+… 
+
+The second approach avoids the creation and destruction of a vector in each time step. For the SIQRD model, the first approach results in a significant performance loss (I have code to test this if you do not believe me). As solving the initial value problem is the main kernel for the assignment, it was important to optimize the performance of this part of the code as much as possible (as hinted in the template of the report). The same goes for the Jacobian in Newton’s method. Allocating a matrix in each Newton step, is even more problematic as the allocation/deallocation now occurs inside a double loop.
+
+
+2) Unnecessary allocations for the LU factorization. As seen in the video lecture on “scratch arrays”, when solving multiple systems of the same size in a loop, it can be beneficial to avoid reallocating the memory space for the pivot elements in each iteration. As mentioned on the discussion forum,  in ublas you should however be careful to reset the pivot elements to their original values to avoid problems.
+
+3) Unnecessary allocations - part 3. As for the evaluation of the cost function we always need to use a matrix of the same size to store the predictions, it is beneficial to allocate this matrix once instead of reallocating it over and over. This also holds for the helper vectors in the numerical solvers for the initial value problem. You could for example store these as member variables in your solver class.
+
+Unnecessary performance loss
+
+4) Unnecessary function evaluations. In Heun’s method, f(x_k) appears twice. Evaluating f(x_k) twice is however not necessary and results in unnecessary calculations and a significant performance loss. 
+
+5) Unnecessary function evaluations - part 2. Most of you correctly state that the computation of the cost function is the most computationally intensive part of the code (what some of you forget to mention is that most of the computation time for evaluating the cost function is spend on solving the initial value problem). Evaluating this cost function should thus be avoided as much as possible. Recomputing LSE(p) and/or gradLSE(p) (which uses 5/6 LSE evaluations depending on your implementation) in the backtracking algorithm leads obviously to a significant overhead.
+
+
+Structure of the code
+
+
+6) The Jacobian passed to the backward Euler method. In the code for Euler’s backward method some use Jf(x) (the Jacobian of the right-hand side function) while others use the Jacobian of G as input function. The first approach is better for two reasons. Firstly, the user is not required to know how the method works. Secondly, it allows for an easy extension to other implicit methods. Additionally, students who expect the Jacobian of G, often forget this when implementing the second system leading to a Newton iteration that does not converge.
+
+7) Modularity. To switch between the IVP solvers some students use string or integer input arguments and if (or select case) statements. This not only results in run-time overhead but also limits the modularity and reusability of your code. On the exam you can be asked how this can be implemented better, and what the advantages are of this new approach.
+
+8) Vector of vectors versus matrix. To save the result of the IVP solver there are two dominant strategies: a matrix or a vector of vectors. On the exam you can be asked to motivate your choice.
+
+Debugging
+
+9) The -DNDEBUG flag. When compiling your production code, it is important to use both the -DNDEBUG and the -O3 compiler flag. In some cases this resulted in a speed up with a factor 50!
+
+10) A lack of assert statements. Assert statements are a useful tool to detect unexpected behavior. Using these assert statements bugs can typically be solved quicker.
+
+11) Verification of the code. As explained in the video on debugging, getting the correct result does not mean that your code is correct. Verifying correctness of your code is an integral part of scientific software and may require some critical thinking and creativity. The lecture on debugging discusses several techniques to help verifying your code: checking convergence behavior of iterative methods using print statements, assert statements, etc.
+
+12) Never ending loops. When using an iterative method (like Newton’s method, the  conjugate gradients method or BFGS) it is important to limit the number of iterations to avoid that your code gets stuck in a never ending loop. 
+
+13) The -DNDEBUG flag - part 2. As mentioned in the lecture on debugging. It is a good idea to disable print statements related to debugging (such as the convergence behavior of iterative methods) in your production code.
+
+Others
+
+14) Computational complexity. There are several ways to evaluate the expression Bss^{T} B with B a n x n matrix. Computing first the outer product ss^{T} is not a good idea, as it leads to a higher computational complexity that even for n=5 has a significant performance impact.
+
+15) No compile statements. Compile statements are asked to assess your knowledge of the compiler flags. If these compile statements are not present, this knowledge can of course not be assessed.
+
+16) Stopping condition backtracking. In the backtracking algorithm, I often encountered an absolute tolerance on the step size eta. On the exam you can be asked why this is not a good idea. What happens for example when the scaling of the cost function changes (e.g. no longer dividing by T*N_{pop}^2)? What is a better stopping condition? 
+
+17) Stopping condition Newton's method. As mentioned in the general feedback of homework 3, it is not a good idea to use a hard coded tolerance for the stopping criterion in Newton’s method when calling this function from Euler’s backward method. This is especially true when using templates that allow for other “value types”!
+
+Extra
+
+18) Unnecessary allocation - part 4. In the implementation of Heun’s method some make an unnecessary allocation in each time step.
+
+Let the right-hand side function be defined as follows
+
+f(ublas::vector               const & x, ublas::vector                 & y){ … }.               
+
+When calling this function in Heun’s method with
+
+f(x+h*temp,fx2);
+
+a temporary vector will be created (and a memory allocation will take place) to store the result of x+h*temp. 
+
